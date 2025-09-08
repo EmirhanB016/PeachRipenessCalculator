@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🍑 Ripeness Classifier</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-yellow-100 to-orange-100 min-h-screen">
+    <div class="w-full bg-orange-500 text-white py-2 px-4 flex justify-center items-center space-x-6">
+        <a href="https://github.com/e-oe/IsThisPeachRipe"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="hover:text-orange-200 transition flex items-center space-x-2">
+            <i class="fab fa-github text-xl"></i>
+            <span>View on GitHub</span>
+        </a>
+        <a href="https://github.com/e-oe/IsThisPeachRipe/blob/main/README.md"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="hover:text-orange-200 transition flex items-center space-x-2">
+            <i class="fas fa-book text-xl"></i>
+            <span>Documentation</span>
+        </a>
+    </div>
+
+    <div class="flex flex-wrap justify-around p-8 gap-8">
+
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md md:w-1/2 lg:w-2/5 text-left space-y-4">
+            <h2 class="text-2xl font-bold text-orange-600 text-center mb-6">How to Use It</h2>
+            <div class="space-y-4 text-gray-700">
+                <p>1. **Select an Image:** Click the "Choose File" button to upload an image of a peach from your device. Make sure the image clearly shows the peach and not containing more than one.</p>
+                <p>2. **Get Prediction:** Once you've selected an image, click the "Is This Peach Ripe" (Predict) button. Our AI model will then analyze the image and provide ripeness predictions for both consuming and harvesting purposes.</p>
+                <p>3. **View Results:** The results will appear below the "Is This Peach Ripe" button, showing the likelihood of the peach being "Unripe," "Ripe," or "Overripe" for each category.</p>
+                <p>4. **Check Past Results:** On the right side of the page, you can see a history of your past predictions, allowing you to easily review previous analyses.</p>
+                <p>5. **Understand Models:** We provide separate models for consuming and harvesting ripeness, as they have different criteria. You can view examples for each model by clicking the respective "Show Examples" buttons.</p>
+            </div>
+
+
+            <div class="flex justify-center space-x-4 mt-6">
+                <button id="showPeachExamplesBtn"
+                        class="bg-orange-300 hover:bg-orange-400 text-orange-800 font-bold py-2 px-4 rounded-xl transition">
+                    Show Consuming Criteria Examples
+                </button>
+                <button id="showAppleExamplesBtn"
+                        class="bg-green-300 hover:bg-green-400 text-green-800 font-bold py-2 px-4 rounded-xl transition">
+                    Show Harvesting Criteria Examples
+                </button>
+            </div>
+
+            <div id="exampleImagesContainer" class="hidden mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50 text-left">
+                <h3 class="text-lg font-bold text-gray-700 mb-3">Example Ripeness Levels:</h3>
+                <div id="peachExamples" class="grid grid-cols-3 gap-3 text-center">
+                    </div>
+                <div id="appleExamples" class="grid grid-cols-3 gap-3 text-center hidden">
+                    </div>
+            </div>
+            </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md md:w-1/2 lg:w-2/5 text-center space-y-6">
+            <h1 class="text-2xl font-bold text-orange-600">🍑 Ripeness Detector 🍑</h1>
+            <p class="text-gray-600 text-sm mb-4">Upload an image of a peach to get ripeness predictions for both consuming and harvesting!</p>
+                        <p class="text-orange-600 text-sm mb-4">There are examples of peaches for you to try under the directory in Peaches folder.</p>
+
+            <input type="file" id="imageInput" accept="image/*"
+                   class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4
+               file:rounded-full file:border-0 file:text-sm file:font-semibold
+               file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200" />
+
+            <img id="preview" src="" alt="Preview"
+                 class="w-64 mx-auto rounded-lg shadow-md hidden" />
+
+            <button onclick="sendImage()"
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-xl transition">
+                Is This Peach Ripe
+            </button>
+
+            <div id="resultsDisplay" class="text-gray-700 font-medium grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="peachResultsCurrent" class="space-y-1">
+                    <h3 class="font-semibold text-orange-500">For Consuming:</h3>
+                    <p class="text-sm text-gray-500">Waiting for data...</p>
+                </div>
+                <div id="appleResultsCurrent" class="space-y-1">
+                    <h3 class="font-semibold text-orange-500">For Harvesting:</h3>
+                    <p class="text-sm text-gray-500">Waiting for data...</p>
+                </div>
+            </div>
+            <p class="text-gray-600 text-sm mb-4">Our model for predicting peaches for harvesting performs best when identifying peaches under natural light and while they remain on the branch. In contrast, a consumption model is not trained on this type of data, which can sometimes lead to less accurate predictions. This is because different classification models operate based on distinct standards and they are trained on different set of data.</p>
+            </div>
+
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md md:w-1/2 lg:w-2/5">
+            <h2 class="text-xl font-bold text-orange-600 mb-4 text-center">Past Results</h2>
+            <div id="pastResults" class="space-y-4">
+                <p class="text-gray-500 text-center" id="noPastResultsMessage">No past results yet.</p>
+            </div>
+        </div>
+
+    </div>
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const resultsDisplay = document.getElementById('resultsDisplay'); // Overall container for current results
+        const peachResultsCurrent = document.getElementById('peachResultsCurrent');
+        const appleResultsCurrent = document.getElementById('appleResultsCurrent');
+        const pastResultsContainer = document.getElementById('pastResults');
+        const noPastResultsMessage = document.getElementById('noPastResultsMessage');
+        const MAX_PAST_RESULTS = 4; // Limit the number of past results to prevent localStorage overflow
+
+        // Helper function to format predictions for a single model's results
+        function formatSingleModelPredictions(title, predictions) {
+            if (!predictions) {
+                return `<h3 class="font-semibold text-orange-500">${title}:</h3><div class="text-sm text-gray-500">Model bulunamadı veya kullanılamıyor.</div>`;
+            }
+
+            let maxPercentage = 0;
+            let maxKey = '';
+
+            // Find the highest percentage and its key for highlighting
+            for (const [key, value] of Object.entries(predictions)) {
+                if (value > maxPercentage) {
+                    maxPercentage = value;
+                    maxKey = key;
+                }
+            }
+
+            const predictionHtml = Object.entries(predictions)
+                .map(([key, value]) => {
+                    const percentage = (value * 100).toFixed(2);
+                    const highlightClass = key === maxKey ? 'bg-orange-200 text-orange-800 font-bold' : 'bg-gray-100';
+                    return `<div class="${highlightClass} rounded p-2 text-sm">${key}: <b>${percentage}%</b></div>`;
+                })
+                .join('');
+
+            return `
+                <h3 class="font-semibold text-orange-500 mb-2">${title}:</h3>
+                ${predictionHtml}
+            `;
+        }
+
+        // Function to render a single past result item (now handles both models)
+        function renderPastResultItem(item) {
+            const peachHtml = formatSingleModelPredictions('For Consuming', item.predictions.peach_results);
+            const appleHtml = formatSingleModelPredictions('For Harvesting', item.predictions.apple_results);
+
+            return `
+                <div class="flex items-center space-x-4 p-3 border border-gray-200 rounded-lg shadow-sm">
+                    <img src="${item.imageDataUrl}" alt="Fruit" class="w-20 h-20 object-cover rounded-md shadow-sm" />
+                    <div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div>${peachHtml}</div>
+                        <div>${appleHtml}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Function to load and display past results from localStorage
+        function loadPastResults() {
+            const storedResults = JSON.parse(localStorage.getItem('peachResults')) || []; // Still using 'peachResults' key
+            if (storedResults.length > 0) {
+                noPastResultsMessage.classList.add('hidden');
+                pastResultsContainer.innerHTML = storedResults.map(renderPastResultItem).join('');
+            } else {
+                noPastResultsMessage.classList.remove('hidden');
+                pastResultsContainer.innerHTML = '';
+            }
+        }
+
+        // Load past results when the page loads
+        document.addEventListener('DOMContentLoaded', loadPastResults);
+
+        imageInput.addEventListener('change', () => {
+            const file = imageInput.files[0];
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.classList.remove("hidden");
+                // Clear previous results and show loading text for both models
+                peachResultsCurrent.innerHTML = '<h3 class="font-semibold text-orange-500">For Consuming:</h3><p class="text-sm text-gray-500">Waiting for data...</p>';
+                appleResultsCurrent.innerHTML = '<h3 class="font-semibold text-orange-500">For Harvesting:</h3><p class="text-sm text-gray-500">Waiting for data...</p>';
+            }
+        });
+
+        async function sendImage() {
+            const file = imageInput.files[0];
+            if (!file) {
+                alert("Please upload an image first.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Set loading state for both result sections
+            peachResultsCurrent.innerHTML = '<h3 class="font-semibold text-orange-500">For Consuming:</h3><p class="text-sm text-gray-500">Waiting for data...</p>';
+            appleResultsCurrent.innerHTML = '<h3 class="font-semibold text-orange-500">For Harvesting:</h3><p class="text-sm text-gray-500">Wating for data...</p>';
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    peachResultsCurrent.innerHTML = `<span class="text-red-500">${data.error}</span>`;
+                    appleResultsCurrent.innerHTML = ''; // Clear apple section on error
+                } else {
+                    // Render Peach Results
+                    peachResultsCurrent.innerHTML = formatSingleModelPredictions('For Consuming', data.peach_results);
+
+                    // Render Apple Results
+                    appleResultsCurrent.innerHTML = formatSingleModelPredictions('For Harvesting', data.apple_results);
+
+                    // Store the combined result and image in localStorage
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const imageDataUrl = event.target.result; // Data URL of the image
+
+                        const storedResults = JSON.parse(localStorage.getItem('peachResults')) || [];
+                        storedResults.unshift({ // Add new result to the beginning
+                            imageDataUrl: imageDataUrl,
+                            predictions: data, // Store the entire combined data
+                            timestamp: new Date().toISOString()
+                        });
+
+                        // Keep only the latest MAX_PAST_RESULTS
+                        if (storedResults.length > MAX_PAST_RESULTS) {
+                            storedResults.splice(MAX_PAST_RESULTS);
+                        }
+
+                        localStorage.setItem('peachResults', JSON.stringify(storedResults));
+                        loadPastResults(); // Reload past results display
+                    };
+                    reader.readAsDataURL(file); // Read the file as a Data URL for storage
+
+                }
+            } catch (err) {
+                peachResultsCurrent.innerHTML = `<span class="text-red-500">Sunucuya ulaşılamadı.</span>`;
+                appleResultsCurrent.innerHTML = ''; // Clear apple section on error
+            }
+        }
+
+        // NEW JAVASCRIPT ADDED BELOW THIS LINE
+        // Get references to the new elements
+        const showPeachExamplesBtn = document.getElementById('showPeachExamplesBtn');
+        const showAppleExamplesBtn = document.getElementById('showAppleExamplesBtn');
+        const exampleImagesContainer = document.getElementById('exampleImagesContainer');
+        const peachExamplesDiv = document.getElementById('peachExamples');
+        const appleExamplesDiv = document.getElementById('appleExamples');
+
+        // Data for example images
+        const peachExampleImages = [
+            { src: 'static/examples/peach_unripe.jpg', label: 'Unripe' },
+            { src: 'static/examples/peach_ripe.jpg', label: 'Ripe' },
+            { src: 'static/examples/peach_overripe.jpg', label: 'Overripe' }
+        ];
+
+        const appleExampleImages = [
+            { src: 'static/examples/harvestingunripe.jpg', label: 'Unripe' },
+            { src: 'static/examples/harvestingripe.jpg', label: 'Ripe' },
+            { src: 'static/examples/harvestingoverripe.jpg', label: 'Overripe' }
+        ];
+
+        // Function to handle displaying example images
+        function showExamples(fruitType) {
+            // Ensure the main example container is visible
+            exampleImagesContainer.classList.remove('hidden');
+
+            // Hide both fruit-specific example divs first
+            peachExamplesDiv.classList.add('hidden');
+            appleExamplesDiv.classList.add('hidden');
+
+            let targetDiv;
+            let imagesToLoad;
+
+            if (fruitType === 'peach') {
+                targetDiv = peachExamplesDiv;
+                imagesToLoad = peachExampleImages;
+            } else if (fruitType === 'apple') {
+                targetDiv = appleExamplesDiv;
+                imagesToLoad = appleExampleImages;
+            } else {
+                // If an invalid fruitType is passed, just hide the container
+                exampleImagesContainer.classList.add('hidden');
+                return;
+            }
+
+            targetDiv.innerHTML = ''; // Clear any previously loaded images in the target div
+            targetDiv.classList.remove('hidden'); // Show the relevant example div
+
+            imagesToLoad.forEach(imgData => {
+                const imgWrapper = document.createElement('div');
+                imgWrapper.className = 'flex flex-col items-center space-y-1'; // Center image and label
+
+                const img = document.createElement('img');
+                img.src = imgData.src;
+                img.alt = imgData.label + ' Example';
+                img.className = 'w-24 h-24 object-cover rounded-md shadow'; // Tailwind for styling images
+
+                const label = document.createElement('span');
+                label.className = 'text-sm text-gray-700 font-medium';
+                label.textContent = imgData.label;
+
+                imgWrapper.appendChild(img);
+                imgWrapper.appendChild(label);
+                targetDiv.appendChild(imgWrapper);
+            });
+        }
+
+        // Add event listeners to the new buttons
+        showPeachExamplesBtn.addEventListener('click', () => showExamples('peach'));
+        showAppleExamplesBtn.addEventListener('click', () => showExamples('apple'));
+        // NEW JAVASCRIPT ADDED ABOVE THIS LINE
+    </script>
+</body>
+</html>
