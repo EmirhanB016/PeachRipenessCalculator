@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍑 Şeftali Olgunluk Sınıflandırıcı</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-yellow-100 to-orange-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center space-y-6">
+        <h1 class="text-2xl font-bold text-orange-600">🍑 Şeftali Olgunluk Detektörü</h1>
+
+        <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-100 file:text-orange-700 hover:file:bg-orange-200">
+
+        <img id="preview" src="" alt="Önizleme" class="w-64 mx-auto rounded-lg shadow-md hidden">
+
+        <button id="predictButton" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-6 rounded-xl transition">
+            Tahmin Et
+        </button>
+
+        <div id="result" class="text-gray-700 font-medium space-y-1"></div>
+    </div>
+
+    <!-- Örnek Görseller Paneli -->
+    <div class="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 w-72 z-50">
+        <details open>
+            <summary class="cursor-pointer font-semibold text-orange-700">📂 Örnek Görseller</summary>
+            <div class="mt-2 space-y-3">
+                <div>
+                    <span class="font-bold text-sm block mb-1">Olgun (Ripe)</span>
+                    <div class="flex gap-2">
+                        <img src="/static/images/ripe/cr1.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('ripe/cr1.png')">
+                        <img src="/static/images/ripe/cr2.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('ripe/cr2.png')">
+                        <img src="/static/images/ripe/cr3.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('ripe/cr3.png')">
+
+                    </div>
+                </div>
+                <div>
+                    <span class="font-bold text-sm block mb-1">Ham (Unripe)</span>
+                    <div class="flex gap-2">
+                        <img src="/static/images/unripe/cur4.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('unripe/cur4.png')">
+                        <img src="/static/images/unripe/cur5.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('unripe/cur5.png')">
+                        <img src="/static/images/unripe/cur6.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('unripe/cur6.png')">
+
+                    </div>
+                </div>
+                <div>
+                    <span class="font-bold text-sm block mb-1">Aşırı Olgun (Overripe)</span>
+                    <div class="flex gap-2">
+                        <img src="/static/images/overripe/cor7.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('overripe/cor7.png')">
+                        <img src="/static/images/overripe/cor8.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('overripe/cor8.png')">
+                        <img src="/static/images/overripe/cor6.png" class="w-20 h-16 object-cover rounded-md cursor-pointer" onclick="loadSampleImage('overripe/cor6.png')">
+
+                    </div>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const predictButton = document.getElementById('predictButton');
+        const resultDiv = document.getElementById('result');
+
+        // Örnek görselleri yükleme
+        async function loadSampleImage(imagePath) {
+            try {
+                const response = await fetch(`/static/images/${imagePath}`);
+                const blob = await response.blob();
+                const file = new File([blob], imagePath.split('/').pop(), { type: blob.type });
+
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                imageInput.files = dataTransfer.files;
+
+                preview.src = URL.createObjectURL(blob);
+                preview.classList.remove("hidden");
+                resultDiv.innerHTML = "";
+            } catch (error) {
+                console.error("Örnek görsel yüklenirken hata:", error);
+                resultDiv.innerHTML = `<div class="text-red-500">Örnek yüklenemedi: ${error.message}</div>`;
+            }
+        }
+
+        // Dosya seçildiğinde önizleme göster
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                preview.src = URL.createObjectURL(file);
+                preview.classList.remove("hidden");
+                resultDiv.innerHTML = "";
+            }
+        });
+
+        // Tahmin butonu işlevi
+        predictButton.addEventListener('click', async function() {
+            const file = imageInput.files[0];
+            if (!file) {
+                alert("Lütfen bir şeftali görseli seçin!");
+                return;
+            }
+
+            resultDiv.innerHTML = '<div class="text-orange-500">Analiz ediliyor...</div>';
+            predictButton.disabled = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = `<div class="text-red-500">Hata: ${data.error}</div>`;
+                } else {
+                    let html = '<div class="space-y-2 text-left">';
+                    for (const [status, probability] of Object.entries(data)) {
+                        const percent = (probability * 100).toFixed(2);
+                        html += `
+                            <div class="flex items-center justify-between">
+                                <span class="w-24">${status}:</span>
+                                <div class="w-32 bg-gray-200 rounded-full h-4 mx-2">
+                                    <div class="bg-orange-500 h-4 rounded-full" style="width: ${percent}%"></div>
+                                </div>
+                                <span class="font-bold w-12">${percent}%</span>
+                            </div>`;
+                    }
+                    resultDiv.innerHTML = html + '</div>';
+                }
+            } catch (error) {
+                console.error("Tahmin hatası:", error);
+                resultDiv.innerHTML = `<div class="text-red-500">Hata: ${error.message}</div>`;
+            } finally {
+                predictButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
+<!--  http://localhost:5000
+bağlantı yoluyla çalıştırınız.-->
