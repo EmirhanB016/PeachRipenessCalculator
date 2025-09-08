@@ -1,4 +1,4 @@
-# 🍑 IsThisPeachRipe: Şeftali Olgunluk Tespit Uygulaması
+# 🍑 PeachRipenessCalculator: Şeftali Olgunluk Tespit Uygulaması
 
 ---
 
@@ -99,7 +99,7 @@ Bu projenin geliştirilmesinde emeği geçen ekip üyeleri ve sorumlulukları:
 # For English
 
 
-# 🍑 IsThisPeachRipe: Peach Ripeness Detection Application
+# 🍑 PeachRipenessCalculator: Peach Ripeness Detection Application
 
 ---
 
